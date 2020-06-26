@@ -31,4 +31,14 @@ public class SelectionManager {
 		}
 
 	}
+
+	public static void DeselectAllDistricts() {
+
+		foreach (DistrictManager district in GameObject.FindObjectsOfType<DistrictManager>()) {
+
+			district.selected = false;
+
+		}
+
+	}
 }

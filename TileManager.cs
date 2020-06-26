@@ -10,8 +10,6 @@ public class TileManager : MonoBehaviour {
 
 	private const string GREEN = "G";
 
-	private SpriteRenderer sr;
-
 	[HideInInspector]
 	public Sprite defaultSprite;
 
@@ -82,6 +80,8 @@ public class TileManager : MonoBehaviour {
 		}
 
 		GetComponent<SpriteRenderer>().sprite = defaultSprite;
+
+		DrawHighlights ();
 	
 	}
 
@@ -177,7 +177,6 @@ public class TileManager : MonoBehaviour {
 					if (neighbor.selected == true && neighbor.district != null) {
 
 						neighbor.district.AddTile (this);
-						district = neighbor.district;
 
 					}
 
@@ -187,6 +186,8 @@ public class TileManager : MonoBehaviour {
 
 		}
 
+		DrawHighlights ();
+
 	}
 
 	public void Deselect() {
@@ -195,11 +196,50 @@ public class TileManager : MonoBehaviour {
 		GetComponent<SpriteRenderer>().sprite = defaultSprite;
 
 		if (district != null) {
-			
+
 			district.RemoveTile (this);
-			district = null;
+
 
 		}
+
+		DrawHighlights ();
+	}
+
+	public void DrawHighlights() {
+
+		if (district == null) {
+
+			foreach (SpriteRenderer sr in GetComponentsInChildren<SpriteRenderer>()) {
+
+				sr.enabled = false;
+
+			}
+
+			transform.GetComponent<SpriteRenderer> ().enabled = true;
+
+		} else {
+
+			List<TileManager> neighbors = grid.GetNeighbors (this);
+			SpriteRenderer[] srList = GetComponentsInChildren<SpriteRenderer> ();
+
+			for (int i = 1; i < 5; i++) {
+
+				srList[i].enabled = true;
+
+				if (neighbors [i-1] != null) {
+
+					if (neighbors [i-1].district == district) {
+
+						srList[i].enabled = false;
+
+					}
+
+				}
+
+			}
+
+		}
+
 	}
 
 }
