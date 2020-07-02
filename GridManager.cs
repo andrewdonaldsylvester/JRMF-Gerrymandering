@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Text.RegularExpressions;
+using UnityEngine.UI;
 
 public class GridManager : MonoBehaviour{
 	
@@ -15,6 +16,8 @@ public class GridManager : MonoBehaviour{
 	private int rows;
 	private int cols;
 
+//	private Transform bg = null;
+
 	[HideInInspector]
 	public TextAsset mapFile;
 
@@ -22,10 +25,25 @@ public class GridManager : MonoBehaviour{
 
 	// The following variables are editable in the inspector
 
+	[Header("Party Colors")]
+	public Color p1Color = new Color(76f, 59f, 77f);
+	public Color p2Color = new Color(234f, 190f, 124f);
+	public Color p3Color = new Color(97f, 201f, 168f);
 
+	public Color p1SelectedColor = new Color(76f, 59f, 77f);
+	public Color p2SelectedColor = new Color(234f, 190f, 124f);
+	public Color p3SelectedColor = new Color(97f, 201f, 168f);
+
+	public Color p1WinColor = new Color(45, 19, 59);
+	public Color p2WinColor = new Color(120, 76, 11);
+	public Color p3WinColor = new Color(5, 66, 47);
+	public Color tieColor = new Color(94, 94, 94);
 
 	[SerializeField]
 	private GameObject tilePrefab;
+
+//	[SerializeField]
+//	private GameObject backgroundPrefab;
 
 	[Header("Tile Dimensions")]
 
@@ -54,13 +72,27 @@ public class GridManager : MonoBehaviour{
 			GameObject.DestroyImmediate (transform.GetChild (0).gameObject);
 
 		}
-			
+
+//		if (this.bg != null) {
+//		
+//			GameObject.DestroyImmediate (this.bg);
+//
+//			this.bg = null;
+//
+//		}
+
 		// Load in the map file 
 
 		string[,] districtMap = MapLoader.Load (mapFile);
 
 		rows = districtMap.GetLength (0);
 		cols = districtMap.GetLength (1);
+
+		// Update the instructions panel
+
+		GameObject.Find ("Rule 2").GetComponent<Text> ().text = "Distribute tiles into " + ((rows * cols) / districtSize).ToString () + 
+			" districts with " + districtSize.ToString () + " tiles each.";
+		GameObject.Find ("Rule 2").GetComponent<Text> ().color = Color.red;
 
 		// Loop through our array and create a tile for each entry
 
@@ -78,6 +110,15 @@ public class GridManager : MonoBehaviour{
 			}
 
 		}
+
+//		GameObject bg = Instantiate (backgroundPrefab);
+//
+//		bg.transform.localScale = new Vector2 (rows * (xMargin + tileWidth), cols * (yMargin + tileHeight));
+//
+//		float gridWidth = (cols * tileWidth) + ((cols - 1) * xMargin);
+//		float gridHeight = (rows * tileHeight) + ((rows - 1) * yMargin);
+//
+//		bg.transform.position = new Vector2 ((tileWidth - gridWidth) / 2, (gridHeight - tileHeight) / 2);
 			
 		generated = true;
 
@@ -113,6 +154,19 @@ public class GridManager : MonoBehaviour{
 			}
 
 		}
+
+//		if (bg != null) {
+//			
+//			bg.localScale = new Vector2 (rows * (xMargin + tileWidth), cols * (yMargin + tileHeight));
+//
+//			float gridWidth = (cols * tileWidth) + ((cols - 1) * xMargin);
+//			float gridHeight = (rows * tileHeight) + ((rows - 1) * yMargin);
+//
+//			bg.position = new Vector2 ((tileWidth - gridWidth) / 2, (gridHeight - tileHeight) / 2);
+//
+//		}
+
+		Center ();
 
 	}
 
@@ -151,24 +205,51 @@ public class GridManager : MonoBehaviour{
 
 		int row = int.Parse(index[0]);
 		int col = int.Parse(index[1]);
-		print (row);
-		print (col);
 
-		// Check above the tile
+		// Check top
 
 		returnList[0] = GetTile(row - 1, col);
 
-		// Check to the right of the tile
+		// Check right
 
 		returnList[1] = GetTile(row, col + 1);
 
-		// Check below the tile
+		// Check bottom
 
 		returnList[2] = GetTile(row + 1, col);
 
-		// Check to the left of the tile
+		// Check left
 
 		returnList[3] = GetTile(row, col - 1);
+
+		return returnList;
+
+	}
+
+	public List<TileManager> GetDiagonals(TileManager tile) {
+	
+		List<TileManager> returnList = new List<TileManager> {null, null, null, null};
+
+		string[] index = Regex.Split (tile.name, @"\D+");
+
+		int row = int.Parse(index[0]);
+		int col = int.Parse(index[1]);
+	
+		// Check top right
+
+		returnList[0] = GetTile(row - 1, col + 1);
+
+		// Check bottom right
+
+		returnList[1] = GetTile(row + 1, col + 1);
+
+		// Check bottom left
+
+		returnList[2] = GetTile(row + 1, col - 1);
+
+		// Check top left
+
+		returnList[3] = GetTile(row - 1, col - 1);
 
 		return returnList;
 

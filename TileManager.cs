@@ -4,12 +4,6 @@ using UnityEngine;
 
 public class TileManager : MonoBehaviour {
 
-	private const string BLUE = "B";
-
-	private const string RED = "R";
-
-	private const string GREEN = "G";
-
 	[HideInInspector]
 	public Sprite defaultSprite;
 
@@ -29,6 +23,7 @@ public class TileManager : MonoBehaviour {
 	public GridManager grid;
 
 
+	public TileDisplayer display = new TileDisplayer();
 
 	public string party;
 
@@ -46,42 +41,48 @@ public class TileManager : MonoBehaviour {
 		
 		this.party = party;
 
-		switch (this.party) {
-			
-		case RED:
-			defaultSprite = Resources.Load<Sprite> ("Sprites/red"); 
-			redSprite = Resources.Load<Sprite> ("Sprites/redR"); 
-			blueSprite = Resources.Load<Sprite> ("Sprites/redB"); 
-			greenSprite = Resources.Load<Sprite>("Sprites/redG"); 
-			tieSprite = Resources.Load<Sprite>("Sprites/redT"); 
-			break;
-		case BLUE:
-			defaultSprite = Resources.Load<Sprite> ("Sprites/blue"); 
-			redSprite = Resources.Load<Sprite> ("Sprites/blueR");
-			blueSprite = Resources.Load<Sprite> ("Sprites/blueB");
-			greenSprite = Resources.Load<Sprite> ("Sprites/blueG");
-			tieSprite = Resources.Load<Sprite>("Sprites/blueT"); 
-			break;
-		case GREEN:
-			defaultSprite = Resources.Load<Sprite> ("Sprites/green");
-			redSprite = Resources.Load<Sprite> ("Sprites/greenR");
-			blueSprite = Resources.Load<Sprite> ("Sprites/greenB");
-			greenSprite = Resources.Load<Sprite> ("Sprites/greenG");
-			tieSprite = Resources.Load<Sprite>("Sprites/greenT"); 
-			break;
-		default:
-			defaultSprite = Resources.Load<Sprite> ("notfound");
-			redSprite = Resources.Load<Sprite> ("notfound");
-			blueSprite = Resources.Load<Sprite> ("notfound");
-			greenSprite = Resources.Load<Sprite> ("notfound");
-			tieSprite = Resources.Load<Sprite>("notfound"); 
-			break;
+//		switch (this.party) { 
+//				
+//		this will need to be refactored for the party names
+//
+//			case RED:
+//				defaultSprite = Resources.Load<Sprite> ("Sprites/red"); 
+//				redSprite = Resources.Load<Sprite> ("Sprites/redR"); 
+//				blueSprite = Resources.Load<Sprite> ("Sprites/redB"); 
+//				greenSprite = Resources.Load<Sprite>("Sprites/redG"); 
+//				tieSprite = Resources.Load<Sprite>("Sprites/redT"); 
+//				break;
+//			case BLUE:
+//				defaultSprite = Resources.Load<Sprite> ("Sprites/blue"); 
+//				redSprite = Resources.Load<Sprite> ("Sprites/blueR");
+//				blueSprite = Resources.Load<Sprite> ("Sprites/blueB");
+//				greenSprite = Resources.Load<Sprite> ("Sprites/blueG");
+//				tieSprite = Resources.Load<Sprite>("Sprites/blueT"); 
+//				break;
+//			case GREEN:
+//				defaultSprite = Resources.Load<Sprite> ("Sprites/green");
+//				redSprite = Resources.Load<Sprite> ("Sprites/greenR");
+//				blueSprite = Resources.Load<Sprite> ("Sprites/greenB");
+//				greenSprite = Resources.Load<Sprite> ("Sprites/greenG");
+//				tieSprite = Resources.Load<Sprite>("Sprites/greenT"); 
+//				break;
+//			default:
+//				defaultSprite = Resources.Load<Sprite> ("notfound");
+//				redSprite = Resources.Load<Sprite> ("notfound");
+//				blueSprite = Resources.Load<Sprite> ("notfound");
+//				greenSprite = Resources.Load<Sprite> ("notfound");
+//				tieSprite = Resources.Load<Sprite>("notfound"); 
+//				break;
+//
+//			}
+//
+//		GetComponent<SpriteRenderer>().sprite = defaultSprite;
+//
+//		DrawHighlights ();
 
-		}
+		display = GetComponent<TileDisplayer> ();
 
-		GetComponent<SpriteRenderer>().sprite = defaultSprite;
-
-		DrawHighlights ();
+		display.Init (this);
 	
 	}
 
@@ -89,94 +90,22 @@ public class TileManager : MonoBehaviour {
 
 	void OnMouseDown() {
 
-		if (!selected && NeighborSelected () && SelectionManager.CountSelectedTiles () < grid.districtSize) {
-			
-			// Set to selected when dragged to from a selected neighbor
-			Select ();
+		// Iterate through each of the adjacent tiles
+		// Add this tile to a district if a neighbor is in the selected district
 
-		} else if (!selected) {
-
-			SelectionManager.DeselectAll ();
-			Select ();
-
-		} else if (selected) {
-
-			Deselect ();
-
-		}
-
-	}
-
-	void OnMouseEnter() {
-
-		if (!selected && Input.GetMouseButton (0) && NeighborSelected () && SelectionManager.CountSelectedTiles () < grid.districtSize) {
-
-			Select ();
-
-		} 
-
-	}
-
-	public bool NeighborSelected() {
-
-		foreach (TileManager neighbor in grid.GetNeighbors (this)) {
-
-			if (neighbor != null) {
-
-				if (neighbor.selected == true) {
-
-					return true;
-
-				}
-
-			}
-
-		}
-
-		return false;
-
-	}
-
-	public int NumNeighborsSelected() {
-
-		int numSelected = 0;
-
-		foreach (TileManager neighbor in grid.GetNeighbors(this)) {
-
-			if (neighbor != null) {
-
-				if (neighbor.selected == true) {
-
-							numSelected++;
-
-				}
-
-			}
-
-		}
-
-		return numSelected;
-
-	}
-
-	public void Select() {
-
-		selected = true;
-
-		if (SelectionManager.CountSelectedTiles () == 1) {
-
-			district = Instantiate (districtPrefab).GetComponent<DistrictManager>();
-			district.AddTile (this);
-
-		} else {
+		if (district == null) {
 
 			foreach (TileManager neighbor in grid.GetNeighbors (this)) {
 
 				if (neighbor != null) {
 
-					if (neighbor.selected == true && neighbor.district != null) {
+					if (neighbor.district != null) {
 
-						neighbor.district.AddTile (this);
+						if (neighbor.district.selected && neighbor.district.tiles.Count < grid.districtSize) {
+
+							neighbor.district.AddTile (this);
+
+						}
 
 					}
 
@@ -184,57 +113,95 @@ public class TileManager : MonoBehaviour {
 
 			}
 
-		}
+			// If none of the adjacent tiles were in a selected district, create a new district and select it
 
-		DrawHighlights ();
+			if (district == null) {
 
-	}
+				district = Instantiate (districtPrefab).GetComponent<DistrictManager> ();
+				district.grid = grid;
 
-	public void Deselect() {
+				district.transform.position = transform.position;
 
-		selected = false;
-		GetComponent<SpriteRenderer>().sprite = defaultSprite;
+				district.Select ();
 
-		if (district != null) {
-
-			district.RemoveTile (this);
-
-
-		}
-
-		DrawHighlights ();
-	}
-
-	public void DrawHighlights() {
-
-		if (district == null) {
-
-			foreach (SpriteRenderer sr in GetComponentsInChildren<SpriteRenderer>()) {
-
-				sr.enabled = false;
+				district.AddTile (this);
 
 			}
-
-			transform.GetComponent<SpriteRenderer> ().enabled = true;
-
+				
 		} else {
 
-			List<TileManager> neighbors = grid.GetNeighbors (this);
-			SpriteRenderer[] srList = GetComponentsInChildren<SpriteRenderer> ();
+			// Select the district that the tile is in when it is clicked on
 
-			for (int i = 1; i < 5; i++) {
+			if (!district.selected) {
 
-				srList[i].enabled = true;
+				district.Select ();
 
-				if (neighbors [i-1] != null) {
+			}
 
-					if (neighbors [i-1].district == district) {
+		}
 
-						srList[i].enabled = false;
+	}
+
+
+
+	void OnMouseEnter() {
+
+		if (district == null && Input.GetMouseButton (0)) {
+
+			foreach (TileManager neighbor in grid.GetNeighbors (this)) {
+
+				if (neighbor != null) {
+
+					if (neighbor.district != null) {
+
+						if (neighbor.district.selected && neighbor.district.tiles.Count < grid.districtSize) {
+
+							neighbor.district.AddTile (this);
+
+						}
 
 					}
 
 				}
+
+			}
+
+		} else if (Input.GetMouseButton (1) && district != null) {
+
+			if (!district.selected) {
+
+				district.Select ();
+
+			} else if (district.Removeable (this)) {
+
+				district.RemoveTile (this);
+
+
+
+			} else {
+
+				// Here we can show the player that the tile can't be removed if we want to do that
+
+			}
+		}
+
+	}
+
+	void OnMouseOver() {
+
+		if (Input.GetMouseButtonDown (1) && district != null) {
+
+			if (!district.selected) {
+
+				district.Select ();
+
+			} else if (district.Removeable (this)) {
+
+				district.RemoveTile (this);
+
+			} else {
+
+				// Here we can show the player that the tile can't be removed if we want to do that
 
 			}
 
